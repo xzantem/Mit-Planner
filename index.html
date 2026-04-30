@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gatherly Planner</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <section class="auth-screen" id="authScreen">
+      <div class="auth-card">
+        <div>
+          <p class="eyebrow" data-i18n="authEyebrow">Private planner</p>
+          <h1>Gatherly Planner</h1>
+          <p data-i18n="authLead">Sign in or create your profile to manage shared meetings.</p>
+        </div>
+        <form id="authForm" class="auth-form">
+          <label>
+            <span data-i18n="userName">User name</span>
+            <input id="authName" name="name" type="text" autocomplete="username" required minlength="2" maxlength="32">
+          </label>
+          <label>
+            <span data-i18n="password">Password</span>
+            <input id="authPassword" name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="128">
+          </label>
+          <p class="form-error" id="authError" role="alert"></p>
+          <div class="auth-actions">
+            <button class="primary-action" type="submit" data-auth-mode="login" data-i18n="signIn">Sign in</button>
+            <button class="secondary-action" type="submit" data-auth-mode="register" data-i18n="createAccount">Create account</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <main class="app-shell" hidden>
+      <header class="topbar">
+        <section class="brand-block" aria-label="Planner overview">
+          <p class="eyebrow" data-i18n="brandEyebrow">Friend group calendar</p>
+          <h1>Gatherly Planner</h1>
+          <p class="lede" data-i18n="brandLede">Plan weekends, pick places, and keep RSVPs visible without burying the group chat.</p>
+        </section>
+        <section class="topbar-right" aria-label="Member and meeting summary">
+          <div class="top-controls">
+            <div class="user-chip">
+              <span data-i18n="signedInAs">Signed in as</span>
+              <strong id="currentUserName">-</strong>
+            </div>
+            <button class="secondary-action" id="logoutButton" type="button" data-i18n="logout">Logout</button>
+            <label class="language-picker">
+              <span data-i18n="language">Language</span>
+              <select id="languageSelect">
+                <option value="pl">Polski</option>
+                <option value="en">English</option>
+              </select>
+            </label>
+            <button class="secondary-action" id="googleCalendarButton" type="button">Google Calendar</button>
+            <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark mode" title="Toggle dark mode">
+              <span aria-hidden="true" id="themeIcon">D</span>
+              <span id="themeLabel">Dark</span>
+            </button>
+          </div>
+          <div class="summary-strip" aria-label="Meeting summary">
+            <article>
+              <span id="upcomingCount">0</span>
+              <p data-i18n="upcoming">upcoming</p>
+            </article>
+            <article>
+              <span id="weekendCount">0</span>
+              <p data-i18n="weekendPlans">weekend plans</p>
+            </article>
+            <article>
+              <span id="optInCount">0</span>
+              <p data-i18n="yourOptIns">your opt-ins</p>
+            </article>
+          </div>
+        </section>
+      </header>
+
+      <section class="alert-stack" aria-label="Weekend alerts">
+        <article class="alert-banner" id="currentWeekendAlert" hidden>
+          <div>
+            <strong data-i18n="currentWeekendGapTitle">No meet this weekend</strong>
+            <p id="currentWeekendAlertText"></p>
+          </div>
+          <button class="secondary-action" id="quickCurrentWeekendButton" type="button" data-i18n="planIt">Plan it</button>
+        </article>
+        <article class="alert-banner" id="nextWeekendAlert" hidden>
+          <div>
+            <strong data-i18n="nextWeekendGapTitle">No meet next weekend</strong>
+            <p id="nextWeekendAlertText"></p>
+          </div>
+          <button class="secondary-action" id="quickNextWeekendButton" type="button" data-i18n="planIt">Plan it</button>
+        </article>
+      </section>
+
+      <section class="workspace">
+        <aside class="sidebar" aria-label="Calendar controls">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow" data-i18n="browse">Browse</p>
+              <h2 id="currentMonthLabel"></h2>
+            </div>
+            <div class="icon-row" aria-label="Month navigation">
+              <button class="icon-button" id="previousMonth" type="button" aria-label="Previous month" title="Previous month">&lsaquo;</button>
+              <button class="icon-button" id="todayButton" type="button" aria-label="Jump to today" title="Jump to today">&bull;</button>
+              <button class="icon-button" id="nextMonth" type="button" aria-label="Next month" title="Next month">&rsaquo;</button>
+            </div>
+          </div>
+
+          <div class="calendar" id="calendarGrid" aria-label="Month calendar"></div>
+
+          <div class="filters" aria-label="Meeting filters">
+            <button class="filter-chip active" data-filter="all" type="button" data-i18n="all">All</button>
+            <button class="filter-chip" data-filter="going" type="button" data-i18n="going">Going</button>
+            <button class="filter-chip" data-filter="undeclared" type="button" data-i18n="undeclared">Undeclared</button>
+            <button class="filter-chip" data-filter="weekend" type="button" data-i18n="weekends">Weekends</button>
+          </div>
+        </aside>
+
+        <section class="agenda" aria-label="Meeting agenda">
+          <div class="agenda-head">
+            <div>
+              <p class="eyebrow" data-i18n="agenda">Agenda</p>
+              <h2 data-i18n="meetings">Meetings</h2>
+            </div>
+            <button class="primary-action" id="newMeetingButton" type="button"><span aria-hidden="true">+ </span><span data-i18n="newMeeting">New meeting</span></button>
+          </div>
+          <div class="meeting-list" id="meetingList"></div>
+        </section>
+
+        <aside class="detail-panel" aria-label="Meeting details">
+          <div id="meetingDetail" class="empty-state">
+            <p class="eyebrow" data-i18n="details">Details</p>
+            <h2 data-i18n="selectMeeting">Select a meeting</h2>
+            <p data-i18n="selectMeetingHelp">Choose a calendar day or meeting card to see the place, attendee status, and RSVP controls.</p>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <dialog id="meetingDialog" class="meeting-dialog">
+      <form method="dialog" id="meetingForm">
+        <div class="dialog-head">
+          <div>
+            <p class="eyebrow" data-i18n="createPlan">Create plan</p>
+            <h2 data-i18n="newMeeting">New meeting</h2>
+          </div>
+          <button class="icon-button" value="cancel" type="button" id="closeDialogButton" aria-label="Close dialog" title="Close">&times;</button>
+        </div>
+
+        <label>
+          <span data-i18n="meetingTitle">Meeting title</span>
+          <input id="meetingTitle" name="title" type="text" data-i18n-placeholder="meetingTitlePlaceholder" placeholder="Board games, brunch, cinema..." required maxlength="56">
+        </label>
+
+        <div class="form-grid">
+          <label>
+            <span data-i18n="startDate">Start date</span>
+            <input id="meetingDate" name="date" type="date" required>
+          </label>
+          <label>
+            <span data-i18n="endDate">End date</span>
+            <input id="meetingEndDate" name="endDate" type="date" required>
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            <span data-i18n="time">Time</span>
+            <input id="meetingTime" name="time" type="time" required>
+          </label>
+        </div>
+
+        <label>
+          <span data-i18n="place">Place</span>
+          <input id="meetingPlace" name="place" type="text" data-i18n-placeholder="placePlaceholder" placeholder="Cafe, park, address, voice chat..." required maxlength="64">
+        </label>
+
+        <label>
+          <span data-i18n="notes">Notes</span>
+          <textarea id="meetingNotes" name="notes" rows="3" data-i18n-placeholder="notesPlaceholder" placeholder="What should everyone know?"></textarea>
+        </label>
+
+        <label class="important-toggle">
+          <input id="meetingImportant" name="important" type="checkbox">
+          <span data-i18n="markImportant">Mark as important</span>
+        </label>
+
+        <fieldset>
+          <legend data-i18n="inviteFriends">Invite friends</legend>
+          <div class="friend-grid" id="friendInviteGrid"></div>
+        </fieldset>
+
+        <menu class="dialog-actions">
+          <button class="secondary-action" value="cancel" type="button" id="cancelDialogButton" data-i18n="cancel">Cancel</button>
+          <button class="primary-action" value="default" type="submit" data-i18n="createMeeting">Create meeting</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
